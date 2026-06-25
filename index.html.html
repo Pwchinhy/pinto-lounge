@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dai Ca Ng at the Pinto Lounge</title>
+    <!-- Tailwind CSS for modern responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for retro & playful typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Rowdies:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #090d16;
+        }
+        .header-font {
+            font-family: 'Rowdies', sans-serif;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+<header class="bg-slate-900 border-b border-red-900/40 shadow-xl py-4 px-6 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-red-600 rounded-full border-2 border-red-400 flex items-center justify-center text-2xl shadow-lg">
+                🛋️
+            </div>
+            <div>
+                <h1 class="header-font text-xl sm:text-2xl text-red-500 tracking-wider">THE PINTO LOUNGE</h1>
+                <p class="text-xs text-slate-400">Exclusive 2D Tasting Lounge & Powder Laboratory</p>
+            </div>
+        </div>
+        
+        <!-- Live HUD metrics (Health instead of Purse) -->
+        <div class="flex gap-4 items-center">
+            <div class="bg-slate-950 border border-slate-800 px-4 py-2 rounded-xl flex items-center gap-2 shadow-inner">
+                <span class="text-xs uppercase text-slate-500 tracking-wider">Dai Ca Ng Status:</span>
+                <span id="player-health" class="text-sm font-bold text-emerald-400">🟢 Stable (100% Consciousness)</span>
+            </div>
+            <button onclick="resetGame()" class="bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 px-3 py-2 rounded-lg transition-colors border border-slate-700">
+                🔄 Wake Up / Reset
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="flex-grow max-w-6xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column: 2D Canvas Game Panel -->
+    <div class="lg:col-span-2 flex flex-col gap-4">
+        <div class="bg-slate-950 border-2 border-slate-800 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col">
+            <!-- Stage / Screen HUD Header -->
+            <div class="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex justify-between items-center text-xs">
+                <span class="text-slate-400 flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></span>
+                    2D Live simulation
+                </span>
+                <span id="interaction-prompt" class="text-red-400 font-semibold uppercase animate-pulse">Use buttons below or Arrow Keys to walk to the Pinto Lounge!</span>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="relative w-full aspect-[16/9] bg-[#0c101d]">
+                <canvas id="gameCanvas" class="w-full h-full block cursor-pointer"></canvas>
+                
+                <!-- Action / Door Entrance overlay triggers -->
+                <div id="door-alert" class="absolute inset-x-0 top-1/3 flex justify-center pointer-events-none hidden">
+                    <div class="bg-red-600 text-white font-bold px-4 py-2 rounded-xl shadow-lg border border-red-400 text-sm animate-bounce">
+                        🚪 Walk inside Pinto Lounge
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2D Controls Overlay Panel -->
+            <div class="bg-slate-900 p-4 border-t border-slate-800 flex flex-wrap justify-between items-center gap-4">
+                <!-- Walk Navigation Buttons -->
+                <div class="flex gap-2">
+                    <button onmousedown="startMove('left')" onmouseup="stopMove()" ontouchstart="startMove('left')" ontouchend="stopMove()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold p-3 px-5 rounded-xl border border-slate-700 shadow-md select-none transition-all">
+                        ⬅️ Walk Left
+                    </button>
+                    <button onmousedown="startMove('right')" onmouseup="stopMove()" ontouchstart="startMove('right')" ontouchend="stopMove()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold p-3 px-5 rounded-xl border border-slate-700 shadow-md select-none transition-all">
+                        ➡️ Walk Right
+                    </button>
+                </div>
+
+                <!-- Contextual Action Button -->
+                <div class="flex gap-2 flex-grow sm:flex-grow-0">
+                    <button id="btn-enter-store" onclick="toggleLocation()" class="w-full sm:w-auto bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg active:scale-95 transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+                        🚪 Enter Pinto Lounge
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col gap-6">
+        <!-- Store / Item Selection Panel (Only accessible or active when inside store) -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4 relative">
+            <div id="store-closed-overlay" class="absolute inset-0 bg-slate-950/95 rounded-2xl z-20 flex flex-col items-center justify-center text-center p-6 transition-all duration-300">
+                <span class="text-5xl mb-3 animate-bounce">🚪</span>
+                <h3 class="header-font text-lg text-red-500">Pinto Lounge Locked</h3>
+                <p class="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed">Dai Ca Ng must walk down the street and enter the lounge before testing any powders.</p>
+                <button onclick="teleportToStore()" class="mt-4 bg-slate-800 hover:bg-slate-700 text-xs font-semibold px-4 py-2 rounded-lg border border-slate-700 transition-colors">
+                    ⚡ Teleport Inside
+                </button>
+            </div>
+
+            <div class="border-b border-slate-800 pb-3">
+                <span class="text-[10px] text-red-500 uppercase tracking-widest font-bold">Scientific Sampling Panel</span>
+                <h2 class="header-font text-xl text-slate-100 flex items-center gap-1.5">
+                    Select Test Specimen
+                </h2>
+            </div>
+
+            <!-- Item Dropdown selector -->
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-slate-400">White Powder Variety:</label>
+                <select id="item-selector" onchange="updateProductPreview()" class="bg-slate-950 border border-slate-800 text-slate-100 p-3 rounded-xl focus:border-red-500 outline-none transition-all cursor-pointer text-sm">
+                    <option value="confectioners_sugar">🧁 Confectioners' Sugar (99.9% Pure)</option>
+                    <option value="baking_soda">🧪 Sodium Bicarbonate (99.8% Pure)</option>
+                    <option value="cornstarch">🌽 Velvety Cornstarch (99.2% Pure)</option>
+                    <option value="billiards_chalk">🎱 Billiards Chalk Dust (98.0% Pure)</option>
+                    <option value="unbleached_flour">🌾 Gloucestershire Flour (95.4% Pure)</option>
+                </select>
+            </div>
+
+            <!-- Size Options Selector -->
+            <div>
+                <label class="text-xs font-semibold text-slate-400 block mb-2">Inhalation Size (Dosage):</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="selectSize('small')" id="size-btn-small" class="size-selector bg-slate-950 hover:border-slate-600 border border-slate-800 rounded-xl p-3 text-center transition-all flex flex-col items-center gap-1">
+                        <span class="text-xl">🫙</span>
+                        <span class="text-xs font-bold text-slate-200">Pinch</span>
+                        <span class="text-[10px] text-red-400">Mild Kick</span>
+                    </button>
+                    <button onclick="selectSize('medium')" id="size-btn-medium" class="size-selector bg-slate-950 hover:border-slate-600 border border-slate-800 rounded-xl p-3 text-center transition-all flex flex-col items-center gap-1">
+                        <span class="text-2xl">🍯</span>
+                        <span class="text-xs font-bold text-slate-200">Jar</span>
+                        <span class="text-[10px] text-red-400">Heavy Blast</span>
+                    </button>
+                    <button onclick="selectSize('large')" id="size-btn-large" class="size-selector bg-slate-950 hover:border-slate-600 border border-slate-800 rounded-xl p-3 text-center transition-all flex flex-col items-center gap-1">
+                        <span class="text-3xl">🛍️</span>
+                        <span class="text-xs font-bold text-slate-200">Sack</span>
+                        <span class="text-[10px] text-red-400">CRITICAL OVERDOSE</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Product Description Card -->
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <p id="product-desc" class="text-xs text-slate-400 leading-relaxed"></p>
+            </div>
+
+            <!-- INHALE ACTION BUTTON -->
+            <button id="btn-inhale" onclick="inhalePowder()" class="w-full bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-extrabold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-wider text-xs animate-pulse">
+                💨 Inhale selected Powder
+            </button>
+        </div>
+
+        <!-- Medical Log & Slipper Warning System -->
+        <div class="bg-red-50 text-slate-950 border-2 border-red-200 rounded-2xl p-5 shadow-xl flex flex-col gap-4 font-mono relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-2 text-xl opacity-30 select-none">🚨</div>
+            
+            <div class="border-b border-red-200 pb-3 text-center">
+                <h3 class="font-bold text-base text-red-900 uppercase tracking-tight">🚑 PINTO GENERAL DIAGNOSTIC</h3>
+                <p class="text-[10px] uppercase font-bold text-slate-600 mt-0.5">Subject ID: Dai Ca Ng</p>
+            </div>
+
+            <!-- Dynamic Medical Logs -->
+            <div class="flex-grow min-h-[120px] max-h-[220px] overflow-y-auto pr-1 text-xs space-y-2">
+                <div class="border-b border-slate-200 pb-2">
+                    <span class="font-bold text-slate-700">[SYSTEM]</span>
+                    <p class="text-slate-600 italic">Standing by inside the lounge. Inhalation actions carry high risk of immediate domestic slippers and/or ambulance intervention.</p>
+                </div>
+                <div id="medical-log-output" class="space-y-2">
+                    <!-- Filled dynamically during animation sequences -->
+                </div>
+            </div>
+
+            <div id="receipt-message-box" class="hidden text-[11px] bg-red-100 text-red-900 border border-red-200 p-2.5 rounded-lg text-center font-bold"></div>
+        </div>
+    </div>
+</main>
+
+<footer class="bg-slate-950 border-t border-slate-800 py-6 px-6 mt-12 text-center text-xs text-slate-500">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p>© 2026 Pinto Lounge Industries. Managed by Dai Ca Ng's Medical Team.</p>
+        <p class="italic">Sound, canvas, ambulance and slippers generated dynamically.</p>
+    </div>
+</footer>
+
+<script>
+    let audioCtx = null;
+
+    function getAudioContext() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        return audioCtx;
+    }
+
+    // Play advanced procedural sound effects
+    function playSound(type) {
+        try {
+            const ctx = getAudioContext();
+            if (ctx.state === 'suspended') {
+                ctx.resume();
+            }
+
+            if (type === 'step') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(120, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.1);
+            } else if (type === 'door') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(220, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
+            } else if (type === 'snort') {
+                // White noise burst for inhalation
+                const bufferSize = ctx.sampleRate * 0.4;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(1000, ctx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.4);
+                
+                const gain = ctx.createGain();
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(ctx.destination);
+                noise.start();
+            } else if (type === 'thud') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(80, ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(10, ctx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.4, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+            } else if (type === 'smack') {
+                // Exploding noise smack for slipper impact
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.4, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.15);
+            } else if (type === 'siren') {
+                // Siren continuous oscillating sound
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                
+                // Frequency swing
+                const now = ctx.currentTime;
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.linearRampToValueAtTime(900, now + 0.25);
+                osc.frequency.linearRampToValueAtTime(600, now + 0.5);
+                osc.frequency.linearRampToValueAtTime(900, now + 0.75);
+                osc.frequency.linearRampToValueAtTime(600, now + 1.0);
+
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+                
+                osc.start();
+                osc.stop(now + 1.2);
+            }
+        } catch (e) {
+            console.log("Audio contexts pending permissions", e);
+        }
+    }
+
+    const POWDERS = {
+        confectioners_sugar: {
+            name: "Confectioners' Sugar",
+            emoji: "🧁",
+            desc: "Ultra-fine sweet dust. Smells like vanilla but sticks to your lungs. Pure sugar rushes guaranteed.",
+        },
+        baking_soda: {
+            name: "Sodium Bicarbonate",
+            emoji: "🧪",
+            desc: "Extremely reactive leavening powder. Causes funny fizzing inside nostrils upon contact.",
+        },
+        cornstarch: {
+            name: "Velvety Cornstarch",
+            emoji: "🌽",
+            desc: "Milled fine corn extract. Heavy coating texture that will make you choke instantly.",
+        },
+        billiards_chalk: {
+            name: "Billiards Chalk Dust",
+            emoji: "🎱",
+            desc: "Crushed cue powder. Blue-ish tints and highly irritating. Decidedly toxic to snort.",
+        },
+        unbleached_flour: {
+            name: "Gloucestershire Flour",
+            emoji: "🌾",
+            desc: "Raw, unbleached thick flour. Clogs nose cavities immediately, generating instant dough.",
+        }
+    };
+
+    let state = {
+        health: 100,
+        location: 'street', // 'street' or 'inside'
+        selectedSize: 'medium',
+        character: {
+            x: 80,
+            y: 215,
+            vx: 0,
+            width: 45,
+            height: 75,
+            speed: 4,
+            facing: 'right',
+            frame: 0,
+            walkCycle: 0
+        },
+        // Cinematic/Animation Sequences variables
+        cinematicMode: false,
+        cinematicStage: 'idle', // 'idle', 'inhaling', 'pass_out', 'angry_woman_appears', 'slipper_beating', 'ambulance_arrival', 'paramedic_stretcher', 'ambulance_leaving', 'hospitalized'
+        cinematicTimer: 0,
+        particles: [],
+        angryWoman: {
+            x: -100,
+            y: 215,
+            walkCycle: 0,
+            frame: 0,
+            slipperAngle: 0,
+            smacksDelivered: 0
+        },
+        ambulance: {
+            x: 850,
+            y: 190,
+            targetX: 420,
+            speed: 5,
+            sirenOn: false
+        },
+        paramedic: {
+            x: 850,
+            y: 215,
+            walkCycle: 0,
+            holdingStretcher: false
+        }
+    };
+
+    // Setup Canvas context
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+        canvas.width = 800;
+        canvas.height = 360;
+    }
+    resizeCanvas();
+
+    // Key Listeners
+    const keys = {};
+    window.addEventListener('keydown', (e) => {
+        if (state.cinematicMode) return; // Freeze controls during animations
+        keys[e.code] = true;
+        if (["ArrowLeft", "ArrowRight", "Space"].includes(e.code)) {
+            e.preventDefault();
+        }
+    });
+    window.addEventListener('keyup', (e) => {
+        keys[e.code] = false;
+    });
+
+    let isMovingLeft = false;
+    let isMovingRight = false;
+
+    function startMove(dir) {
+        if (state.cinematicMode) return;
+        if (dir === 'left') isMovingLeft = true;
+        if (dir === 'right') isMovingRight = true;
+    }
+
+    function stopMove() {
+        isMovingLeft = false;
+        isMovingRight = false;
+    }
+
+    function gameLoop() {
+        updateGameLogic();
+        drawScene();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function updateGameLogic() {
+        if (state.cinematicMode) {
+            updateCinematicCutscene();
+            return;
+        }
+
+        // Horizontal Movement
+        let dx = 0;
+        if (keys['ArrowLeft'] || keys['KeyA'] || isMovingLeft) {
+            dx = -state.character.speed;
+            state.character.facing = 'left';
+            state.character.walkCycle += 0.25;
+        }
+        if (keys['ArrowRight'] || keys['KeyD'] || isMovingRight) {
+            dx = state.character.speed;
+            state.character.facing = 'right';
+            state.character.walkCycle += 0.25;
+        }
+
+        // Apply movement
+        if (dx !== 0) {
+            state.character.x += dx;
+            state.character.frame = Math.floor(state.character.walkCycle) % 4;
+            if (Math.floor(state.character.walkCycle) % 4 === 1 && Math.random() < 0.15) {
+                playSound('step');
+            }
+        } else {
+            state.character.walkCycle = 0;
+            state.character.frame = 0;
+        }
+
+        // Location Check and constraints
+        if (state.location === 'street') {
+            if (state.character.x < 10) state.character.x = 10;
+            if (state.character.x > 750) state.character.x = 750;
+
+            const nearDoor = (state.character.x >= 480 && state.character.x <= 600);
+            const doorAlert = document.getElementById('door-alert');
+            const btnEnter = document.getElementById('btn-enter-store');
+
+            if (nearDoor) {
+                doorAlert.classList.remove('hidden');
+                btnEnter.innerText = "🚪 Enter Lounge";
+                btnEnter.classList.remove('bg-slate-800');
+                btnEnter.classList.add('bg-red-600');
+            } else {
+                doorAlert.classList.add('hidden');
+            }
+        } else {
+            // Inside Pinto Lounge boundaries
+            if (state.character.x < 80) state.character.x = 80;
+            if (state.character.x > 720) state.character.x = 720;
+            
+            const btnEnter = document.getElementById('btn-enter-store');
+            btnEnter.innerText = "🚪 Leave Lounge";
+            btnEnter.classList.remove('bg-red-600');
+            btnEnter.classList.add('bg-slate-800', 'text-slate-200');
+        }
+    }
+
+    function updateCinematicCutscene() {
+        state.cinematicTimer++;
+
+        if (state.cinematicStage === 'inhaling') {
+            // Spawn swirling powder particles near the table heading to his nose
+            if (state.cinematicTimer < 60) {
+                for (let i = 0; i < 4; i++) {
+                    state.particles.push({
+                        x: 390 + (Math.random() - 0.5) * 15,
+                        y: 195,
+                        vx: -1.5 - Math.random() * 2,
+                        vy: -0.5 - Math.random() * 2,
+                        size: 2 + Math.random() * 4,
+                        alpha: 1
+                    });
+                }
+            }
+            // Animate particles
+            state.particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.02;
+            });
+            state.particles = state.particles.filter(p => p.alpha > 0);
+
+            // Snorting sound effect pulses
+            if (state.cinematicTimer % 15 === 1) {
+                playSound('snort');
+            }
+
+            if (state.cinematicTimer > 90) {
+                transitionCinematicStage('pass_out');
+            }
+        } 
+        
+        else if (state.cinematicStage === 'pass_out') {
+            // Character shaking then tumbling
+            if (state.cinematicTimer === 10) {
+                addLog("[DIAGNOSTIC]", "Nerve cells overwhelmed. Cognitive abilities plunging down...");
+            }
+            
+            if (state.cinematicTimer === 45) {
+                playSound('thud');
+                addLog("[DIAGNOSTIC]", "COGNITIVE SYSTEM FAILS. DAI CA NG HAS PASSED OUT FLAT!");
+                document.getElementById('player-health').innerText = "🔴 Unconscious (0%)";
+                document.getElementById('player-health').className = "text-sm font-bold text-red-500 animate-pulse";
+            }
+
+            if (state.cinematicTimer > 90) {
+                transitionCinematicStage('angry_woman_appears');
+            }
+        } 
+        
+        else if (state.cinematicStage === 'angry_woman_appears') {
+            // Move Angry Woman in from the left
+            if (state.angryWoman.x < 240) {
+                state.angryWoman.x += 4;
+                state.angryWoman.walkCycle += 0.3;
+                state.angryWoman.frame = Math.floor(state.angryWoman.walkCycle) % 4;
+                if (state.cinematicTimer % 12 === 1) {
+                    playSound('step');
+                }
+            } else {
+                addLog("[INTERVENTION]", "Wife/Auntie storms the lounge holding a leather slipper!");
+                transitionCinematicStage('slipper_beating');
+            }
+        } 
+        
+        else if (state.cinematicStage === 'slipper_beating') {
+            // Swing arm and trigger hits
+            // Periodically smack Dai Ca Ng's head (which is around x=320, since he's passed out flat)
+            const beatCycle = state.cinematicTimer % 30;
+            
+            // Arm rotation math
+            if (beatCycle < 15) {
+                state.angryWoman.slipperAngle = -beatCycle * 0.1; // Raising arm
+            } else {
+                state.angryWoman.slipperAngle = -1.5 + (beatCycle - 15) * 0.15; // Whipping down
+            }
+
+            if (beatCycle === 20) {
+                // Hit connects!
+                playSound('smack');
+                state.angryWoman.smacksDelivered++;
+                addLog("[SLAP]", `Slipper strikes head! Smack count: ${state.angryWoman.smacksDelivered}`);
+                
+                // Spawn golden impact sparks
+                for (let i = 0; i < 8; i++) {
+                    state.particles.push({
+                        x: 310,
+                        y: 260,
+                        vx: (Math.random() - 0.5) * 8,
+                        vy: -2 - Math.random() * 5,
+                        size: 3 + Math.random() * 3,
+                        alpha: 1,
+                        color: Math.random() > 0.5 ? '#f59e0b' : '#ef4444'
+                    });
+                }
+            }
+
+            // Animate impact particles
+            state.particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2; // gravity
+                p.alpha -= 0.03;
+            });
+            state.particles = state.particles.filter(p => p.alpha > 0);
+
+            if (state.angryWoman.smacksDelivered >= 4) {
+                addLog("[INTERVENTION]", "Auntie stops beatdown. Handing patient to emergency response.");
+                transitionCinematicStage('ambulance_arrival');
+            }
+        } 
+        
+        else if (state.cinematicStage === 'ambulance_arrival') {
+            // Sound sirens periodically
+            if (state.cinematicTimer % 35 === 1) {
+                playSound('siren');
+            }
+
+            // Bring ambulance in
+            if (state.ambulance.x > state.ambulance.targetX) {
+                state.ambulance.x -= state.ambulance.speed;
+            } else {
+                addLog("[EMERGENCY]", "Pinto Medics have pulled up inside the lounge.");
+                transitionCinematicStage('paramedic_stretcher');
+            }
+        } 
+        
+        else if (state.cinematicStage === 'paramedic_stretcher') {
+            if (state.cinematicTimer % 35 === 1) {
+                playSound('siren');
+            }
+
+            // Paramedic walks out to patient
+            if (state.paramedic.x > 330) {
+                state.paramedic.x -= 3;
+                state.paramedic.walkCycle += 0.25;
+            } else {
+                // Secure Dai Ca Ng to stretcher
+                state.paramedic.holdingStretcher = true;
+                addLog("[MEDIC]", "Dai Ca Ng strapped safely to the paramedic stretcher.");
+                
+                // Paramedic goes back carrying stretcher
+                if (state.cinematicTimer > 90) {
+                    transitionCinematicStage('ambulance_leaving');
+                }
+            }
+        } 
+        
+        else if (state.cinematicStage === 'ambulance_leaving') {
+            if (state.cinematicTimer % 35 === 1) {
+                playSound('siren');
+            }
+
+            // Move paramedic carrying stretcher back into the ambulance
+            if (state.paramedic.x < state.ambulance.x + 30) {
+                state.paramedic.x += 3;
+                state.paramedic.walkCycle += 0.25;
+            } else {
+                // Paramedic entered ambulance. Now ambulance speeds away left
+                state.paramedic.holdingStretcher = false;
+                state.ambulance.x -= 8;
+                if (state.ambulance.x < -200) {
+                    transitionCinematicStage('hospitalized');
+                }
+            }
+        }
+    }
+
+    function transitionCinematicStage(stage) {
+        state.cinematicStage = stage;
+        state.cinematicTimer = 0;
+    }
+
+    function drawScene() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (state.location === 'street') {
+            drawStreetBackground();
+        } else {
+            drawStoreInterior();
+        }
+
+        // Draw character Dai Ca Ng (except if hospitalized/leaving inside ambulance)
+        const hidePlayer = (state.cinematicStage === 'ambulance_leaving' && state.paramedic.x >= state.ambulance.x) || (state.cinematicStage === 'hospitalized');
+        if (!hidePlayer) {
+            drawDaiCaNg();
+        }
+
+        // Draw Angry Slipper Woman
+        if (state.cinematicStage === 'angry_woman_appears' || state.cinematicStage === 'slipper_beating' || state.cinematicStage === 'ambulance_arrival' || state.cinematicStage === 'paramedic_stretcher' || state.cinematicStage === 'ambulance_leaving') {
+            drawAngryWoman();
+        }
+
+        // Draw Paramedics / Stretcher
+        if (state.cinematicStage === 'paramedic_stretcher' || state.cinematicStage === 'ambulance_leaving') {
+            drawParamedics();
+        }
+
+        // Draw Ambulance
+        if (state.cinematicStage === 'ambulance_arrival' || state.cinematicStage === 'paramedic_stretcher' || state.cinematicStage === 'ambulance_leaving') {
+            drawAmbulance();
+        }
+
+        // Draw Particle arrays
+        drawParticles();
+    }
+
+    // DRAWING ELEMENTS: Street Landscape
+    function drawStreetBackground() {
+        // Sky gradient
+        const skyGrd = ctx.createLinearGradient(0, 0, 0, 300);
+        skyGrd.addColorStop(0, "#060913");
+        skyGrd.addColorStop(1, "#111827");
+        ctx.fillStyle = skyGrd;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Big moon
+        ctx.beginPath();
+        ctx.arc(120, 60, 24, 0, Math.PI * 2);
+        ctx.fillStyle = "#fef08a";
+        ctx.shadowColor = "#f59e0b";
+        ctx.shadowBlur = 15;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Street silhouettes
+        ctx.fillStyle = "#090d16";
+        ctx.fillRect(20, 120, 100, 180);
+        ctx.fillRect(160, 140, 120, 160);
+        ctx.fillRect(320, 110, 80, 190);
+
+        // Pinto Lounge Storefront Structure
+        ctx.fillStyle = "#3b0712"; // Deep burgundy wine facade
+        ctx.fillRect(450, 80, 240, 220);
+        
+        ctx.fillStyle = "#991b1b"; // Neon borders
+        ctx.fillRect(440, 75, 260, 12);
+        ctx.fillRect(440, 60, 260, 4);
+
+        // Neon Sign
+        ctx.fillStyle = "#0c0a09";
+        ctx.fillRect(470, 95, 200, 45);
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(470, 95, 200, 45);
+        
+        // Glow effect for neon
+        ctx.fillStyle = "#fca5a5";
+        ctx.font = "bold 15px 'Rowdies'";
+        ctx.textAlign = "center";
+        ctx.fillText("PINTO LOUNGE", 570, 122);
+        ctx.fillStyle = "#ef4444";
+        ctx.font = "bold 9px 'Plus Jakarta Sans'";
+        ctx.fillText("Premium Tastings & Snorts", 570, 134);
+
+        // Soft glass lights inside storefront
+        ctx.fillStyle = "rgba(239, 68, 68, 0.15)";
+        ctx.fillRect(470, 160, 50, 70);
+        ctx.strokeRect(470, 160, 50, 70);
+
+        // Front doors
+        ctx.fillStyle = "#11080a";
+        ctx.fillRect(550, 160, 60, 120);
+        ctx.strokeStyle = "#b91c1c";
+        ctx.strokeRect(550, 160, 60, 120);
+
+        ctx.fillStyle = "#991b1b";
+        ctx.fillRect(560, 180, 40, 18);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 9px Arial";
+        ctx.fillText("OPEN 24/7", 580, 192);
+
+        // Pavement
+        ctx.fillStyle = "#1f2937";
+        ctx.fillRect(0, 280, canvas.width, 80);
+        ctx.fillStyle = "#374151";
+        ctx.fillRect(0, 280, canvas.width, 4);
+
+        // Lamps
+        drawStreetLamp(140, 140);
+        drawStreetLamp(720, 140);
+    }
+
+    function drawStreetLamp(x, y) {
+        ctx.fillStyle = "#030712";
+        ctx.fillRect(x, y, 6, 140);
+        ctx.beginPath();
+        ctx.arc(x + 3, y - 10, 10, 0, Math.PI * 2);
+        ctx.fillStyle = "#ef4444";
+        ctx.shadowColor = "#f87171";
+        ctx.shadowBlur = 18;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    // DRAWING ELEMENTS: Lounge Interior
+    function drawStoreInterior() {
+        // Luxury Velvet Walls
+        ctx.fillStyle = "#27050c";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Golden wall trims
+        ctx.fillStyle = "#450a14";
+        for (let i = 0; i < canvas.width; i += 65) {
+            ctx.fillRect(i, 0, 15, canvas.height - 80);
+        }
+
+        // Mirrors & golden borders
+        ctx.fillStyle = "#3b0712";
+        ctx.fillRect(350, 40, 100, 70);
+        ctx.strokeStyle = "#fbbf24";
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(350, 40, 100, 70);
+        
+        ctx.fillStyle = "#fef08a";
+        ctx.font = "11px 'Rowdies'";
+        ctx.textAlign = "center";
+        ctx.fillText("PINTO RETAIL", 400, 80);
+
+        // Storage Shelves & display specimen
+        ctx.fillStyle = "#451a03";
+        ctx.fillRect(50, 120, 700, 15);
+        ctx.fillRect(50, 190, 700, 15);
+
+        // Display sample jars
+        drawDecorativeJar(110, 85, "🧁");
+        drawDecorativeJar(190, 85, "🧪");
+        drawDecorativeJar(270, 85, "🌽");
+        drawDecorativeJar(490, 85, "🎱");
+        drawDecorativeJar(570, 85, "🌾");
+
+        // Ground Floor
+        ctx.fillStyle = "#1a0508";
+        ctx.fillRect(0, 280, canvas.width, 80);
+        ctx.fillStyle = "#310a11";
+        ctx.fillRect(0, 280, canvas.width, 5);
+
+        // Interactive Lab Sampling Stand / Table
+        ctx.fillStyle = "#5c1d24";
+        ctx.fillRect(360, 220, 80, 60);
+        ctx.fillStyle = "#ef4444";
+        ctx.fillRect(350, 212, 100, 8); // table top
+
+        // Draw currently selected sample container on the table
+        const selectedId = document.getElementById('item-selector').value;
+        const currentPowder = POWDERS[selectedId];
+        if (currentPowder) {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(390, 192, 20, 20); // main glass bowl
+            ctx.fillStyle = "#fbbf24";
+            ctx.fillRect(392, 188, 16, 4); // lid
+            ctx.fillStyle = "#000000";
+            ctx.font = "10px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(currentPowder.emoji, 400, 206);
+        }
+    }
+
+    function drawDecorativeJar(x, y, emoji) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(x, y, 22, 35);
+        ctx.fillStyle = "#ef4444";
+        ctx.fillRect(x + 2, y - 4, 18, 4);
+        ctx.fillStyle = "#000000";
+        ctx.font = "12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(emoji, x + 11, y + 22);
+    }
+
+    function drawDaiCaNg() {
+        const char = state.character;
+        let bob = Math.sin(char.walkCycle) * 3;
+        
+        ctx.save();
+
+        if (state.cinematicStage === 'pass_out' && state.cinematicTimer >= 45) {
+            // ROTATE FLAT ON BACK ON THE GROUND
+            ctx.translate(320, 260);
+            ctx.rotate(Math.PI / 2);
+            bob = 0; // stop bobbing
+        } else if (state.cinematicStage === 'angry_woman_appears' || state.cinematicStage === 'slipper_beating' || state.cinematicStage === 'ambulance_arrival' || state.cinematicStage === 'paramedic_stretcher' || state.cinematicStage === 'ambulance_leaving') {
+            // Passed out flat throughout subsequent stages
+            ctx.translate(320, 260);
+            ctx.rotate(Math.PI / 2);
+            bob = 0;
+        } else if (state.cinematicStage === 'inhaling') {
+            // Positioned exactly at the testing table
+            ctx.translate(345, 215);
+            bob = Math.sin(state.cinematicTimer * 0.2) * 1.5;
+        } else {
+            // Normal street or inside position
+            ctx.translate(char.x, char.y);
+        }
+
+        // Draw Shadow
+        ctx.beginPath();
+        ctx.ellipse(22, 68, 20, 6, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0,0,0,0.4)";
+        ctx.fill();
+
+        // Legs
+        ctx.fillStyle = "#1e293b";
+        if (char.frame === 0 || state.cinematicMode) {
+            ctx.fillRect(10, 50 + bob, 10, 15);
+            ctx.fillRect(25, 50 + bob, 10, 15);
+        } else {
+            ctx.fillRect(7, 49 + bob, 10, 16);
+            ctx.fillRect(28, 51 + bob, 10, 14);
+        }
+
+        // Torso / Leather Coat
+        ctx.fillStyle = "#1c1917";
+        ctx.fillRect(6, 20 + bob, 33, 32);
+
+        // Gold chain
+        ctx.strokeStyle = "#fbbf24";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(22, 24 + bob, 8, 0, Math.PI);
+        ctx.stroke();
+
+        // Arms / Hands
+        ctx.fillStyle = "#1c1917";
+        if (char.facing === 'right') {
+            ctx.fillRect(35, 24 + bob, 8, 18);
+            ctx.fillStyle = "#fbcfe8";
+            ctx.fillRect(35, 42 + bob, 8, 6);
+        } else {
+            ctx.fillRect(2, 24 + bob, 8, 18);
+            ctx.fillStyle = "#fbcfe8";
+            ctx.fillRect(2, 42 + bob, 8, 6);
+        }
+
+        // Face
+        ctx.fillStyle = "#fbcfe8";
+        ctx.fillRect(12, 2 + bob, 20, 20);
+
+        // Sunglasses (Spins or dead X eyes if knocked out)
+        if (state.cinematicStage === 'pass_out' || state.cinematicStage === 'angry_woman_appears' || state.cinematicStage === 'slipper_beating' || state.cinematicStage === 'ambulance_arrival' || state.cinematicStage === 'paramedic_stretcher' || state.cinematicStage === 'ambulance_leaving') {
+            // Dizzy/Dead face
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 2;
+            // Left eye X
+            ctx.beginPath();
+            ctx.moveTo(16, 8); ctx.lineTo(22, 14);
+            ctx.moveTo(22, 8); ctx.lineTo(16, 14);
+            ctx.stroke();
+            // Right eye X
+            ctx.beginPath();
+            ctx.moveTo(24, 8); ctx.lineTo(30, 14);
+            ctx.moveTo(30, 8); ctx.lineTo(24, 14);
+            ctx.stroke();
+            
+            // Frown
+            ctx.beginPath();
+            ctx.arc(22, 20, 4, Math.PI, 0);
+            ctx.stroke();
+        } else {
+            // Normal sunglasses
+            ctx.fillStyle = "#000000";
+            if (char.facing === 'right') {
+                ctx.fillRect(20, 6 + bob, 11, 5);
+                ctx.fillRect(14, 7 + bob, 7, 2);
+            } else {
+                ctx.fillRect(13, 6 + bob, 11, 5);
+                ctx.fillRect(23, 7 + bob, 7, 2);
+            }
+        }
+
+        // Flat-cap Hat
+        ctx.fillStyle = "#292524";
+        ctx.fillRect(8, -5 + bob, 28, 9);
+        if (char.facing === 'right') {
+            ctx.fillRect(32, -2 + bob, 10, 4);
+        } else {
+            ctx.fillRect(2, -2 + bob, 10, 4);
+        }
+
+        ctx.restore();
+
+        // Render dizzy spirals above his head if knocked out
+        if (state.cinematicStage === 'pass_out' || state.cinematicStage === 'angry_woman_appears' || state.cinematicStage === 'slipper_beating') {
+            ctx.save();
+            ctx.translate(340, 200);
+            const rotSpeed = Date.now() * 0.005;
+            ctx.rotate(rotSpeed);
+            ctx.strokeStyle = "#fef08a";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < 30; i++) {
+                let angle = 0.2 * i;
+                let r = 2 * angle;
+                ctx.lineTo(r * Math.cos(angle), r * Math.sin(angle));
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+
+    function drawAngryWoman() {
+        const woman = state.angryWoman;
+        const bob = Math.sin(woman.walkCycle) * 3;
+
+        ctx.save();
+        ctx.translate(woman.x, woman.y);
+
+        // Body / Colorful Floral Apron dress
+        ctx.fillStyle = "#db2777"; // Hot pink base dress
+        ctx.fillRect(8, 20 + bob, 34, 35);
+        ctx.fillStyle = "#fdf2f8"; // White polka dots
+        ctx.beginPath();
+        ctx.arc(15, 30 + bob, 3, 0, Math.PI * 2);
+        ctx.arc(30, 30 + bob, 3, 0, Math.PI * 2);
+        ctx.arc(22, 45 + bob, 3, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+
+        // Legs with cute house slippers
+        ctx.fillStyle = "#fbcfe8";
+        ctx.fillRect(14, 55 + bob, 8, 12);
+        ctx.fillRect(28, 55 + bob, 8, 12);
+        ctx.fillStyle = "#f43f5e"; // Pink flip-flops
+        ctx.fillRect(11, 65 + bob, 12, 5);
+        ctx.fillRect(25, 65 + bob, 12, 5);
+
+        // Head
+        ctx.fillStyle = "#fbcfe8";
+        ctx.fillRect(15, 2 + bob, 20, 20);
+
+        // Curler rollers on head
+        ctx.fillStyle = "#60a5fa"; // Blue curlers
+        ctx.beginPath();
+        ctx.arc(15, 1 + bob, 4, 0, Math.PI * 2);
+        ctx.arc(25, 1 + bob, 4, 0, Math.PI * 2);
+        ctx.arc(35, 1 + bob, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Angry eyes
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(18, 8 + bob, 3, 3);
+        ctx.fillRect(28, 8 + bob, 3, 3);
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 2;
+        // Angry slanted eyebrows
+        ctx.beginPath();
+        ctx.moveTo(16, 5 + bob); ctx.lineTo(21, 7 + bob);
+        ctx.moveTo(33, 5 + bob); ctx.lineTo(28, 7 + bob);
+        ctx.stroke();
+
+        // Furious open mouth
+        ctx.fillStyle = "#9d174d";
+        ctx.beginPath();
+        ctx.arc(25, 15 + bob, 3, 0, Math.PI);
+        ctx.fill();
+
+        // Swinging arm holding slipper
+        ctx.save();
+        ctx.translate(32, 22 + bob);
+        ctx.rotate(woman.slipperAngle);
+        
+        // Arm
+        ctx.fillStyle = "#fbcfe8";
+        ctx.fillRect(0, 0, 18, 8);
+        
+        // Massive Green Slipper (weapon of discipline)
+        ctx.fillStyle = "#10b981";
+        ctx.fillRect(15, -4, 18, 14);
+        ctx.fillStyle = "#047857";
+        ctx.fillRect(20, -6, 4, 18); // slipper strap
+        
+        ctx.restore();
+
+        // Angry steam clouds popping out of her head
+        if (state.cinematicStage === 'slipper_beating') {
+            ctx.fillStyle = "rgba(255,255,255,0.7)";
+            ctx.beginPath();
+            ctx.arc(-5, 5, 8, 0, Math.PI*2);
+            ctx.arc(-15, -5, 6, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = "#ef4444";
+            ctx.font = "bold 9px Arial";
+            ctx.fillText("💢", -12, 5);
+        }
+
+        ctx.restore();
+
+        // Render comic speech bubble over her head
+        if (state.cinematicStage === 'slipper_beating') {
+            ctx.fillStyle = "#ffffff";
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(160, 110, 140, 45, 10);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Pointer tail
+            ctx.beginPath();
+            ctx.moveTo(210, 155);
+            ctx.lineTo(230, 180);
+            ctx.lineTo(225, 155);
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = "#dc2777";
+            ctx.font = "bold 11px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("💢 KHÔNG ĐƯỢC HÍT!", 230, 128);
+            ctx.font = "bold 9px sans-serif";
+            ctx.fillText("WHO TAUGHT YOU THIS?!", 230, 141);
+        }
+    }
+
+    function drawParamedics() {
+        const medic = state.paramedic;
+        const bob = Math.sin(medic.walkCycle) * 3;
+
+        ctx.save();
+        ctx.translate(medic.x, medic.y);
+
+        // Paramedic Body
+        ctx.fillStyle = "#f8fafc"; // White scrubs
+        ctx.fillRect(8, 18 + bob, 28, 36);
+        ctx.fillStyle = "#ef4444"; // Red Cross on uniform
+        ctx.fillRect(19, 28 + bob, 6, 12);
+        ctx.fillRect(16, 31 + bob, 12, 6);
+
+        // Legs
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(10, 54 + bob, 8, 14);
+        ctx.fillRect(24, 54 + bob, 8, 14);
+
+        // Head
+        ctx.fillStyle = "#fbcfe8";
+        ctx.fillRect(12, 2 + bob, 20, 16);
+        
+        // Medic Cap
+        ctx.fillStyle = "#3b82f6";
+        ctx.fillRect(10, -3 + bob, 24, 6);
+
+        // Eyes / Glasses
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(15, 6 + bob, 4, 3);
+        ctx.fillRect(23, 6 + bob, 4, 3);
+        ctx.beginPath();
+        ctx.arc(22, 13 + bob, 2, 0, Math.PI);
+        ctx.stroke();
+
+        ctx.restore();
+
+        // Draw the stretcher
+        if (medic.holdingStretcher) {
+            ctx.fillStyle = "#94a3b8"; // Steel poles
+            ctx.fillRect(320, 260, 120, 8); // main base
+            ctx.fillStyle = "#e2e8f0"; // Stretcher pillow
+            ctx.fillRect(320, 252, 15, 8);
+
+            // Stretcher legs
+            ctx.strokeStyle = "#475569";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(335, 268); ctx.lineTo(345, 278);
+            ctx.moveTo(345, 268); ctx.lineTo(335, 278);
+            ctx.moveTo(415, 268); ctx.lineTo(425, 278);
+            ctx.moveTo(425, 268); ctx.lineTo(415, 278);
+            ctx.stroke();
+        }
+    }
+
+    function drawAmbulance() {
+        const amb = state.ambulance;
+        ctx.save();
+        ctx.translate(amb.x, amb.y);
+
+        // Shadow
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.beginPath();
+        ctx.ellipse(90, 85, 95, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Main Boxy Cabin (White)
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.roundRect(15, 0, 150, 75, 10);
+        ctx.fill();
+
+        // Front cockpit slope (Red/Silver grill)
+        ctx.beginPath();
+        ctx.moveTo(15, 25);
+        ctx.lineTo(0, 45);
+        ctx.lineTo(0, 75);
+        ctx.lineTo(15, 75);
+        ctx.closePath();
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+
+        // Red accents / stripe
+        ctx.fillStyle = "#dc2777";
+        ctx.fillRect(0, 45, 165, 12);
+
+        // Red cross
+        ctx.fillStyle = "#ef4444";
+        ctx.fillRect(80, 15, 10, 25);
+        ctx.fillRect(72, 22, 26, 10);
+
+        // Windshield
+        ctx.fillStyle = "#0284c7";
+        ctx.beginPath();
+        ctx.moveTo(18, 10);
+        ctx.lineTo(5, 35);
+        ctx.lineTo(30, 35);
+        ctx.lineTo(30, 10);
+        ctx.closePath();
+        ctx.fill();
+
+        // Wheels
+        ctx.fillStyle = "#0f172a";
+        ctx.beginPath();
+        ctx.arc(40, 78, 18, 0, Math.PI * 2);
+        ctx.arc(130, 78, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#94a3b8";
+        ctx.beginPath();
+        ctx.arc(40, 78, 8, 0, Math.PI * 2);
+        ctx.arc(130, 78, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Flashing siren light
+        const lightOn = Math.floor(Date.now() / 150) % 2 === 0;
+        ctx.fillStyle = lightOn ? "#ef4444" : "#3b82f6";
+        ctx.fillRect(110, -8, 16, 8);
+        
+        // Light glow lines
+        ctx.strokeStyle = lightOn ? "rgba(239, 68, 68, 0.6)" : "rgba(59, 130, 246, 0.6)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(118, -8); ctx.lineTo(105, -20);
+        ctx.moveTo(118, -8); ctx.lineTo(118, -25);
+        ctx.moveTo(118, -8); ctx.lineTo(131, -20);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    function drawParticles() {
+        state.particles.forEach(p => {
+            ctx.fillStyle = p.color || "rgba(255, 255, 255, " + p.alpha + ")";
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+    function toggleLocation() {
+        if (state.cinematicMode) return;
+        if (state.location === 'street') {
+            if (state.character.x >= 480 && state.character.x <= 600) {
+                playSound('door');
+                state.location = 'inside';
+                state.character.x = 120;
+                document.getElementById('store-closed-overlay').style.display = 'none';
+            }
+        } else {
+            playSound('door');
+            state.location = 'street';
+            state.character.x = 550;
+            document.getElementById('store-closed-overlay').style.display = 'flex';
+        }
+    }
+
+    function teleportToStore() {
+        if (state.cinematicMode) return;
+        playSound('door');
+        state.location = 'inside';
+        state.character.x = 180;
+        document.getElementById('store-closed-overlay').style.display = 'none';
+    }
+
+    function updateProductPreview() {
+        const selectedId = document.getElementById('item-selector').value;
+        const prod = POWDERS[selectedId];
+        if (prod) {
+            document.getElementById('product-desc').innerText = prod.desc;
+        }
+    }
+
+    function selectSize(sizeId) {
+        state.selectedSize = sizeId;
+        document.querySelectorAll('.size-selector').forEach(btn => {
+            btn.classList.remove('border-red-500', 'bg-slate-900', 'scale-105');
+            btn.classList.add('border-slate-800', 'bg-slate-950');
+        });
+        const activeBtn = document.getElementById(`size-btn-${sizeId}`);
+        if (activeBtn) {
+            activeBtn.classList.remove('border-slate-800', 'bg-slate-950');
+            activeBtn.classList.add('border-red-500', 'bg-slate-900', 'scale-105');
+        }
+    }
+
+    function inhalePowder() {
+        if (state.cinematicMode) return;
+
+        const selectedId = document.getElementById('item-selector').value;
+        const prod = POWDERS[selectedId];
+        const size = state.selectedSize;
+
+        // Start Cinematic sequence
+        state.cinematicMode = true;
+        state.character.facing = 'right';
+        
+        // Position Dai Ca Ng next to table
+        state.character.x = 345;
+        state.character.y = 215;
+
+        // Reset stage coordinates
+        state.angryWoman.x = -100;
+        state.angryWoman.smacksDelivered = 0;
+        state.ambulance.x = 850;
+        state.paramedic.x = 850;
+        state.paramedic.holdingStretcher = false;
+
+        transitionCinematicStage('inhaling');
+
+        // Log initiation
+        addLog("[INHALATION]", `Dai Ca Ng is sampling one ${size.toUpperCase()} of ${prod.name}!`);
+    }
+
+    function addLog(tag, message) {
+        const container = document.getElementById('medical-log-output');
+        const logItem = document.createElement('div');
+        logItem.className = "border-b border-red-100 pb-1 text-[11px] font-sans";
+        logItem.innerHTML = `<span class="font-bold text-red-700">${tag}</span> ${message}`;
+        container.appendChild(logItem);
+        
+        // Auto Scroll to bottom
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function resetGame() {
+        state.health = 100;
+        state.cinematicMode = false;
+        state.cinematicStage = 'idle';
+        state.cinematicTimer = 0;
+        state.particles = [];
+        state.location = 'inside';
+        state.character.x = 180;
+        state.character.y = 215;
+        state.character.facing = 'right';
+
+        document.getElementById('player-health').innerText = "🟢 Stable (100% Consciousness)";
+        document.getElementById('player-health').className = "text-sm font-bold text-emerald-400";
+        document.getElementById('medical-log-output').innerHTML = '';
+        addLog("[RECOVERY]", "Dai Ca Ng discharged from Pinto General. Restored to full stamina!");
+        
+        playSound('door');
+    }
+
+    window.onload = function() {
+        updateProductPreview();
+        selectSize('medium');
+        gameLoop();
+    };
+</script>
+</body>
+</html>
