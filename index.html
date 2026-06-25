@@ -435,7 +435,6 @@
 
     function updateGameLogic() {
         if (state.cinematicMode) {
-            updateCinematicCutscene();
             return;
         }
 
@@ -464,6 +463,8 @@
             state.character.frame = 0;
         }
 
+        const prompt = document.getElementById('interaction-prompt');
+
         // Location Check and constraints
         if (state.location === 'street') {
             if (state.character.x < 10) state.character.x = 10;
@@ -472,6 +473,8 @@
             const nearDoor = (state.character.x >= 480 && state.character.x <= 600);
             const doorAlert = document.getElementById('door-alert');
             const btnEnter = document.getElementById('btn-enter-store');
+
+            prompt.classList.remove('hidden');
 
             if (nearDoor) {
                 doorAlert.classList.remove('hidden');
@@ -490,6 +493,9 @@
             btnEnter.innerText = "🚪 Leave Lounge";
             btnEnter.classList.remove('bg-red-600');
             btnEnter.classList.add('bg-slate-800', 'text-slate-200');
+
+            // Hide the street walking instruction message inside the facility
+            prompt.classList.add('hidden');
         }
     }
 
